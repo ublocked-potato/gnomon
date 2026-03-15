@@ -131,8 +131,8 @@
           <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen Coder 32B — coding</option>
         </optgroup>
         <optgroup label="Image generation">
+          <option value="IMAGE:black-forest-labs/FLUX.1-schnell">FLUX.1 Schnell — recommended</option>
           <option value="IMAGE:stabilityai/stable-diffusion-xl-base-1.0">Stable Diffusion XL</option>
-          <option value="IMAGE:black-forest-labs/FLUX.1-schnell">FLUX.1 Schnell — fast</option>
         </optgroup>
       </select>
       <button class="hbtn" onclick="exportChat()">Export</button>
@@ -233,8 +233,17 @@ function stripLatex(t){
 }
 function renderMd(text){
   text=stripLatex(text);
+  // Extract code blocks BEFORE escaping so backticks are preserved
+  const codeBlocks=[];
+  text=text.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,lang,code)=>{
+    const id='c'+Math.random().toString(36).slice(2,8);
+    const placeholder='__CB'+codeBlocks.length+'__';
+    codeBlocks.push(`<pre id="${id}"><button class="cbtn" onclick="cc('${id}')">Copy</button><code>${esc(code.trim())}</code></pre>`);
+    return placeholder;
+  });
   let h=esc(text);
-  h=h.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,code)=>{const id='c'+Math.random().toString(36).slice(2,8);return `<pre id="${id}"><button class="cbtn" onclick="cc('${id}')">Copy</button><code>${code.trim()}</code></pre>`;});
+  // Restore code blocks
+  codeBlocks.forEach((block,i)=>{ h=h.replace('__CB'+i+'__',block); });
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
   h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
