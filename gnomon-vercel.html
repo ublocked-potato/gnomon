@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gnomon — Intelligent Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f1011;--surface:#141516;--surface2:#181a1b;--surface3:#1e2021;
+    --border:#222425;--border2:#2a2c2e;--border3:#323436;
+    --text:#c8cacc;--text2:#888a8d;--text3:#4a4c4e;--text4:#303234;
+    --accent:#8a9a8a;--accent2:#6a7a6a;
+    --user-bg:#181b1c;--user-border:#272a2b;
+    --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  }
+  html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden;}
+  #app{display:flex;flex-direction:column;height:100vh;}
+
+  #header{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+  #hl{display:flex;align-items:center;gap:11px;}
+  #logo{width:34px;height:34px;border-radius:10px;background:var(--surface3);border:1px solid var(--border3);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#a0a5a0;letter-spacing:-0.02em;}
+  #app-name{font-size:15px;font-weight:500;color:#c0c2c4;letter-spacing:-0.01em;}
+  #app-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+  #hr{display:flex;align-items:center;gap:8px;}
+  .hbtn{padding:6px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+  .hbtn:hover{background:var(--surface3);color:var(--text);}
+  #sdot{width:6px;height:6px;border-radius:50%;background:#6a8a6a;transition:background 0.3s;}
+  #stxt{font-size:11.5px;color:var(--text3);}
+  #msel{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:11.5px;padding:5px 9px;border-radius:7px;outline:none;font-family:var(--font);cursor:pointer;}
+  #msel option{background:var(--surface2);}
+
+  #layout{display:flex;flex:1;min-height:0;}
+
+  #sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  #st{padding:10px 9px;}
+  .new-btn{width:100%;padding:8px;border-radius:7px;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-size:12.5px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;}
+  .new-btn:hover{background:var(--surface2);color:var(--text2);border-style:solid;}
+  .ssec{padding:10px 13px 5px;font-size:9.5px;font-weight:600;color:var(--text4);letter-spacing:0.08em;text-transform:uppercase;}
+  #hist{flex:1;overflow-y:auto;padding:0 7px;}
+  #hist::-webkit-scrollbar{width:3px;}
+  #hist::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+  .hi{padding:8px 9px;border-radius:6px;font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;margin-bottom:2px;transition:all 0.12s;}
+  .hi:hover{background:var(--surface2);color:var(--text2);}
+  .hi.active{background:var(--surface3);color:var(--text2);border:1px solid var(--border2);}
+  #sfoot{padding:10px;border-top:1px solid var(--border);flex-shrink:0;}
+  .mpill{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text3);}
+  .mdot{width:5px;height:5px;border-radius:50%;background:var(--accent2);flex-shrink:0;}
+  #mname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  #main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  #msgs{flex:1;overflow-y:auto;padding:26px 0 12px;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;}
+  #msgs::-webkit-scrollbar{width:4px;}
+  #msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+  #empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:40px;}
+  #elogo{width:54px;height:54px;border-radius:17px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:#909590;letter-spacing:-0.02em;margin-bottom:6px;}
+  #etitle{font-size:22px;font-weight:500;color:#b8babb;letter-spacing:-0.03em;}
+  #esub{font-size:13px;color:var(--text3);max-width:260px;line-height:1.65;}
+
+  .msg{max-width:760px;margin:0 auto;width:100%;padding:0 22px;}
+  .mh{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .av{width:27px;height:27px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;}
+  .av.ai{background:var(--surface3);border:1px solid var(--border2);color:#8a958a;}
+  .av.user{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);}
+  .mr{font-size:11.5px;color:var(--text3);font-weight:500;}
+  .mt{font-size:10.5px;color:var(--text4);margin-left:auto;}
+  .mb{font-size:14px;line-height:1.78;color:#b8babe;padding-left:35px;}
+  .mb p{margin-bottom:10px;}
+  .mb p:last-child{margin-bottom:0;}
+  .mb code{background:var(--surface3);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-family:var(--mono);font-size:12px;color:#9aaa9a;}
+  .mb pre{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px;margin:10px 0;overflow-x:auto;position:relative;}
+  .mb pre code{background:none;border:none;padding:0;color:#8a9a8a;font-size:12.5px;line-height:1.65;}
+  .cbtn{position:absolute;top:8px;right:8px;padding:3px 9px;border-radius:5px;border:1px solid var(--border2);background:var(--surface3);color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+  .cbtn:hover{color:var(--text2);}
+  .mb ul,.mb ol{padding-left:18px;margin:8px 0;}
+  .mb li{margin-bottom:5px;}
+  .mb strong{color:var(--text);font-weight:500;}
+  .mb h1,.mb h2,.mb h3{font-weight:500;margin:14px 0 7px;color:#b0b2b4;}
+  .mb h1{font-size:17px;}.mb h2{font-size:15px;}.mb h3{font-size:14px;}
+  .mb blockquote{border-left:2px solid var(--border3);padding-left:13px;margin:10px 0;color:var(--text2);}
+  .mb a{color:#8a9a8a;text-decoration:none;}
+  .mb a:hover{text-decoration:underline;}
+  .mb table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
+  .mb th{background:var(--surface3);padding:7px 11px;text-align:left;border-bottom:1px solid var(--border2);font-weight:500;color:var(--text2);}
+  .mb td{padding:7px 11px;border-bottom:1px solid var(--border);}
+  .umsg .mb{background:var(--user-bg);border:1px solid var(--user-border);border-radius:11px;padding:12px 14px;margin-left:35px;}
+
+  .tdots{display:flex;gap:5px;padding-left:35px;align-items:center;height:24px;}
+  .tdots span{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:td 1.2s infinite ease-in-out;}
+  .tdots span:nth-child(2){animation-delay:0.2s;}
+  .tdots span:nth-child(3){animation-delay:0.4s;}
+  @keyframes td{0%,80%,100%{transform:scale(0.5);opacity:0.3;}40%{transform:scale(1);opacity:1;}}
+
+  #ia{padding:12px 18px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  #iw{max-width:760px;margin:0 auto;background:var(--surface2);border:1px solid var(--border2);border-radius:13px;display:flex;align-items:flex-end;gap:9px;padding:9px 13px;transition:border-color 0.2s;}
+  #iw:focus-within{border-color:var(--border3);}
+  #prompt{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-family:var(--font);resize:none;min-height:23px;max-height:180px;line-height:1.6;}
+  #prompt::placeholder{color:var(--text4);}
+  #sbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all 0.15s;}
+  #sbtn:hover:not(:disabled){background:var(--border);color:#a0b0a0;}
+  #sbtn:disabled{color:var(--text4);cursor:not-allowed;}
+  #if{max-width:760px;margin:7px auto 0;display:flex;justify-content:center;}
+  #fnote{font-size:11px;color:var(--text4);}
+
+  #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface3);border:1px solid var(--border2);color:var(--text2);padding:9px 18px;border-radius:9px;font-size:13px;transition:transform 0.3s;z-index:999;white-space:nowrap;}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:650px){#sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="hl">
+      <div id="logo">G</div>
+      <div>
+        <div id="app-name">Gnomon</div>
+        <div id="app-sub">Intelligent assistant</div>
+      </div>
+    </div>
+    <div id="hr">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div id="sdot"></div>
+        <span id="stxt">Ready</span>
+      </div>
+      <select id="msel" onchange="changeModel(this.value)">
+        <option value="Qwen/Qwen2.5-72B-Instruct">Qwen 2.5 72B (recommended)</option>
+        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B (faster)</option>
+        <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B</option>
+        <option value="mistralai/Mixtral-8x7B-Instruct-v0.1">Mixtral 8x7B</option>
+      </select>
+      <button class="hbtn" onclick="exportChat()">Export</button>
+      <button class="hbtn" onclick="clearChat()">Clear</button>
+    </div>
+  </div>
+
+  <div id="layout">
+    <div id="sidebar">
+      <div id="st"><button class="new-btn" onclick="newChat()">+ New chat</button></div>
+      <div class="ssec">Recent</div>
+      <div id="hist"></div>
+      <div id="sfoot">
+        <div class="mpill">
+          <div class="mdot"></div>
+          <span id="mname">Qwen 2.5 72B</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="main">
+      <div id="msgs">
+        <div id="empty">
+          <div id="elogo">G</div>
+          <div id="etitle">Gnomon</div>
+          <div id="esub">Ask me anything — I'll adapt to what you need.</div>
+        </div>
+      </div>
+      <div id="ia">
+        <div id="iw">
+          <textarea id="prompt" placeholder="Message Gnomon…" rows="1"
+            oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+          <button id="sbtn" onclick="sendMessage()">↑</button>
+        </div>
+        <div id="if">
+          <span id="fnote">Free to use — no account needed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const BACKEND = 'https://potatounblocked-gnomon.hf.space';
+
+let history = [];
+let currentModel = 'Qwen/Qwen2.5-72B-Instruct';
+let busy = false;
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,180)+'px';}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function setStatus(label,color){document.getElementById('stxt').textContent=label;document.getElementById('sdot').style.background=color;}
+function changeModel(val){currentModel=val;document.getElementById('mname').textContent=val.split('/')[1]||val;}
+function clearChat(){if(!history.length)return;history=[];const m=document.getElementById('msgs');m.innerHTML='';m.appendChild(makeEmpty());}
+function newChat(){clearChat();document.querySelectorAll('.hi').forEach(el=>el.classList.remove('active'));}
+function makeEmpty(){const d=document.createElement('div');d.id='empty';d.innerHTML='<div id="elogo">G</div><div id="etitle">Gnomon</div><div id="esub">Ask me anything — I\'ll adapt to what you need.</div>';return d;}
+function getTime(){return new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function renderMd(text){
+  let h=esc(text);
+  h=h.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,code)=>{const id='c'+Math.random().toString(36).slice(2,8);return `<pre id="${id}"><button class="cbtn" onclick="cc('${id}')">Copy</button><code>${code.trim()}</code></pre>`;});
+  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  h=h.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  h=h.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  h=h.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  h=h.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+  h=h.replace(/^[-*] (.+)$/gm,'<li>$1</li>');
+  h=h.replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>');
+  h=h.replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>');
+  h=h.replace(/\n{2,}/g,'</p><p>');
+  h=h.replace(/\n/g,'<br>');
+  if(!h.match(/^<(p|ul|h|pre|bl)/))h='<p>'+h+'</p>';
+  return h;
+}
+function cc(id){const code=document.getElementById(id)?.querySelector('code')?.textContent||'';navigator.clipboard.writeText(code).then(()=>showToast('Copied!'));}
+function addToSidebar(text){
+  const list=document.getElementById('hist');
+  document.querySelectorAll('.hi').forEach(el=>el.classList.remove('active'));
+  const item=document.createElement('div');
+  item.className='hi active';
+  item.textContent=text.slice(0,30)+(text.length>30?'…':'');
+  list.insertBefore(item,list.firstChild);
+  if(list.children.length>14)list.removeChild(list.lastChild);
+}
+function appendMsg(role,content){
+  const msgs=document.getElementById('msgs');
+  const empty=document.getElementById('empty');
+  if(empty)empty.remove();
+  const isUser=role==='user';
+  const wrap=document.createElement('div');
+  wrap.className='msg '+(isUser?'umsg':'aimsg');
+  wrap.innerHTML=`<div class="mh"><div class="av ${isUser?'user':'ai'}">${isUser?'U':'G'}</div><span class="mr">${isUser?'You':'Gnomon'}</span><span class="mt">${getTime()}</span></div><div class="mb">${isUser?'<p>'+esc(content)+'</p>':renderMd(content)}</div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function showTyping(){
+  const msgs=document.getElementById('msgs');
+  const empty=document.getElementById('empty');
+  if(empty)empty.remove();
+  const el=document.createElement('div');
+  el.className='msg';el.id='typ';
+  el.innerHTML='<div class="mh"><div class="av ai">G</div><span class="mr">Gnomon</span></div><div class="tdots"><span></span><span></span><span></span></div>';
+  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typ');if(t)t.remove();}
+
+async function sendMessage(){
+  if(busy)return;
+  const el=document.getElementById('prompt');
+  const text=el.value.trim();
+  if(!text)return;
+  el.value='';el.style.height='auto';
+  document.getElementById('sbtn').disabled=true;
+  busy=true;
+  setStatus('Thinking…','#7a8a5a');
+  if(!history.length)addToSidebar(text);
+  appendMsg('user',text);
+  history.push({role:'user',content:text});
+  showTyping();
+  try{
+    const res=await fetch(`${BACKEND}/chat`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:history,model:currentModel})
+    });
+    const data=await res.json();
+    removeTyping();
+    if(data.error){
+      appendMsg('assistant','**Error:** '+data.error);
+      setStatus('Error','#8a5a5a');
+    }else{
+      appendMsg('assistant',data.reply);
+      history.push({role:'assistant',content:data.reply});
+      setStatus('Ready','#6a8a6a');
+    }
+  }catch(err){
+    removeTyping();
+    appendMsg('assistant','**Error:** Could not reach Gnomon. Please try again.');
+    setStatus('Error','#8a5a5a');
+  }
+  busy=false;
+  document.getElementById('sbtn').disabled=false;
+  el.focus();
+}
+
+function exportChat(){
+  if(!history.length){showToast('No messages to export');return;}
+  const lines=history.map(m=>`[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n---\n\n');
+  const blob=new Blob([lines],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='gnomon-chat.txt';a.click();
+  showToast('Exported!');
+}
+</script>
+</body>
+</html>
